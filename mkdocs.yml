@@ -6,6 +6,13 @@ theme:
   palette:
     primary: "indigo"
     accent: "indigo"
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          setup_commands:
+            - "import sys; sys.path.insert(0, 'src')"
 nav:
   - Home: index.md
   - Installation: installation.md

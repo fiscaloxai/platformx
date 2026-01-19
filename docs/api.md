@@ -1,18 +1,11 @@
+
 # API Reference
 
-This repository ships a typed Python package in `src/platformx`. We recommend generating an API reference using one of the following tools:
+The API reference below is generated automatically from the `platformx` package using `mkdocstrings`.
 
-- pdoc (quick, single-command):
-
-```bash
-pip install pdoc3
-pdoc --output-dir docs/api platformx
-```
-
-- Sphinx + autodoc (more flexible, best for larger projects):
-
-1. Create a `docs/sphinx` directory and run `sphinx-quickstart`.
-2. Enable `sphinx.ext.autodoc` and `sphinx.ext.napoleon` in `conf.py`.
-3. Add `.. automodule:: platformx.core` style directives to the RST files or use `sphinx-apidoc`.
-
-Keep API docs in `docs/api/` so MkDocs can include/generated pages if you prefer HTML generation first.
+::: platformx
+		options:
+			show_root_toc_entry: true
+			members: true
+			inherited_members: true
+			show_source: false
