@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "platformx"
+version = "0.1.0"
+description = "PlatformX — a pharma-focused AI platform for accuracy, traceability, and safety."
+requires-python = ">=3.10"
+dependencies = [
+    "transformers",
+    "torch",
+    "datasets",
+    "peft",
+    "chromadb",
+    "pydantic",
+]
