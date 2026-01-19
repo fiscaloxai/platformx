@@ -1,0 +1,19 @@
+site_name: PlatformX
+site_description: "PlatformX — Typed, auditable foundation for regulated ML workloads"
+repo_name: ParmarDarshan29/platformx
+theme:
+  name: material
+  palette:
+    primary: "indigo"
+    accent: "indigo"
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Getting Started: getting_started.md
+  - API: api.md
+  - Contributing: contributing.md
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
