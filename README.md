@@ -1,3 +1,5 @@
+# <p align="center"><img src="PlatformX.png" alt="PlatformX Logo" width="220"/></p>
+
 # PlatformX
 
 PlatformX is a pharmaceutical and life-sciences focused AI platform designed for building accurate, auditable, and safety-conscious applications. It provides the foundational packaging, typing, and governance scaffolding necessary for later phases such as controlled fine-tuning, retrieval-augmented workflows, and regulatory-grade model auditing.
