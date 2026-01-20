@@ -1,4 +1,4 @@
-# <p align="center"><img src="PlatformX.png" alt="PlatformX Logo" width="220"/></p>
+# <p align="center"><img src="platformx.png" alt="PlatformX Logo" width="120"/></p>
 
 # PlatformX
 
