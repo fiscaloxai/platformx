@@ -18,7 +18,15 @@ nav:
   - Installation: installation.md
   - Getting Started: getting_started.md
   - API: api.md
-  - Contributing: contributing.md
+  - Modules:
+    - Core: modules/core.md
+    - Config: modules/config.md
+    - Data: modules/data.md
+    - Training (RAFT): modules/training_raft.md
+    - Model (Finetune): modules/model_finetune.md
+    - Safety: modules/safety.md
+  - Configuration: configuration.md
+  - Strategy: strategy.md
 markdown_extensions:
   - admonition
   - codehilite
