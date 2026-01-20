@@ -21,5 +21,3 @@ Why Use PlatformX?
 - **Extensible adapters:** clear adapter interfaces for model backends and secure data sources.
 - **Documentation & traceability:** API docs and changelogs to support compliance.
 
-Regulatory references
-- (Removed — see project README for guidance)
