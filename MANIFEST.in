@@ -1,0 +1,3 @@
+# Include all Python source files and the README
+recursive-include src/platformx *.py
+include README.md

@@ -19,11 +19,12 @@ checkpoints/
 *.pth
 
 # Large datasets
-data/
-datasets/
+# Large datasets
+# Only ignore top-level data/ and datasets/ folders, not src/platformx/data/
+/data/
+/datasets/
 *.tar.gz
 *.zip
-
 # Vector databases / local indices
 chromadb/
 chroma.db
