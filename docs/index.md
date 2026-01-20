@@ -22,6 +22,4 @@ Why Use PlatformX?
 - **Documentation & traceability:** API docs and changelogs to support compliance.
 
 Regulatory references
-- FDA guidance on AI/ML: https://www.fda.gov/medical-devices/software-medical-device-samd
-- GxP overview: https://www.ema.europa.eu/en/human-regulatory/research-development/compliance/good-practices
-- ISO 13485 (medical devices quality management): https://www.iso.org/standard/59752.html
+- (Removed — see project README for guidance)
