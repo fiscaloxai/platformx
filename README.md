@@ -3,6 +3,12 @@
 
 # PlatformX
 
+# PlatformX
+
+<div align="center">
+	<img src="PlatformX.png" alt="PlatformX Logo" width="80"/>
+</div>
+
 PlatformX is an enterprise-grade Python library developed by Fiscal Ox for building accurate, auditable, and safety-conscious AI applications in the pharmaceutical and life sciences domains. PlatformX provides modular, production-ready components for controlled fine-tuning, retrieval-augmented generation (RAG), RAFT sample generation, and regulatory-grade model auditing.
 
 ## Table of Contents
