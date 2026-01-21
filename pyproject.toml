@@ -94,9 +94,7 @@ dev = [
 ]
 
 
-[tool.pytest.ini_options]
-addopts = "--cov=src/platformx --cov-report=term-missing"
-testpaths = ["tests"]
+
 
 [tool.mypy]
 python_version = "3.10"
@@ -125,26 +123,11 @@ show_missing = true
 skip_covered = true
 omit = ["src/platformx/__init__.py"]
 
+
 [tool.mkdocs]
 site_name = "PlatformX Documentation"
 site_url = "https://your-org.github.io/platformx"
 repo_url = "https://github.com/your-org/platformx"
-theme = {
-    name = "material",
-    custom_dir = "docs/theme"
-}
-nav = [
-    {"Home": "docs/index.md"},
-    {"Getting Started": "docs/getting_started.md"},
-    {"API": "docs/api.md"},
-    {"Configuration": "docs/configuration.md"},
-    {"Strategy": "docs/strategy.md"},
-    {"Modules": [
-        {"Config": "docs/modules/config.md"},
-        {"Core": "docs/modules/core.md"},
-        {"Data": "docs/modules/data.md"},
-        {"Model Finetune": "docs/modules/model_finetune.md"},
-        {"Safety": "docs/modules/safety.md"},
-        {"Training RAFT": "docs/modules/training_raft.md"},
-    ]}
-]
+
+# TOML does not support inline tables or arrays of tables with curly braces. Use stringified YAML for nav if needed, or move to mkdocs.yml.
+# Here, we provide only the TOML-compatible fields. Move nav and theme to mkdocs.yml for full support.

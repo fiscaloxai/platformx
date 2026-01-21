@@ -7,6 +7,7 @@ from .embeddings import EmbeddingBackend, TFIDFBackend, CachedEmbeddingBackend
 import json
 from pathlib import Path
 import logging
+import os
 
 from ..data.schema import DatasetSchema, IntendedUse
 
@@ -26,6 +27,7 @@ class VectorBackend(Protocol):
         ...
 
 
+
 @dataclass(frozen=True)
 class IndexedChunk:
     chunk_id: str
@@ -35,13 +37,11 @@ class IndexedChunk:
     text: str
 
 
-
+class LocalVectorStore:
     """Simple deterministic local vector store using TF or embedding backends and cosine similarity.
-
     This is intentionally simple, explainable, and requires no external services.
     Now supports pluggable embedding backends.
     """
-
     def __init__(self, embedding_backend: Optional[EmbeddingBackend] = None) -> None:
         self._embedding_backend = embedding_backend or TFIDFBackend()
         self._vectors: Dict[str, Dict[str, float]] = {}
@@ -88,7 +88,13 @@ class IndexedChunk:
         logger.info(f"LocalVectorStore index saved to {path}")
 
     def load_index(self, path: str) -> None:
-        """Load vectors and meta from a JSON file."""
+        """Load vectors and meta from a JSON file. If file does not exist, set empty index."""
+        import os
+        if not os.path.exists(path):
+            logger.warning(f"Index file {path} not found. Initializing empty index.")
+            self._vectors = {}
+            self._meta = {}
+            return
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         self._vectors = {k: {kk: float(vv) for kk, vv in v.items()} for k, v in data["vectors"].items()}
@@ -96,6 +102,14 @@ class IndexedChunk:
         logger.info(f"LocalVectorStore index loaded from {path} ({len(self._vectors)} chunks)")
 
 
+class Indexer:
+
+    @classmethod
+    def load(cls, directory: str) -> "Indexer":
+        """Load an Indexer from a directory."""
+        indexer = cls()
+        indexer.load_index(directory)
+        return indexer
 
     """
     Builds retrieval indexes from approved datasets only.
@@ -105,34 +119,194 @@ class IndexedChunk:
     - Supports overlapping chunks for improved retrieval.
     - Index persistence supported via save_index/load_index.
     """
-
-    def __init__(self, backend: VectorBackend = None, chunk_size_words: int = 200, chunk_overlap_words: int = 50, embedding_backend: EmbeddingBackend = None) -> None:
+    def __init__(self, backend: VectorBackend = None, chunk_size: int = 200, chunk_overlap: int = 50, embedding_backend: EmbeddingBackend = None) -> None:
         if backend is None and embedding_backend is not None:
             self.backend = LocalVectorStore(embedding_backend=embedding_backend)
         elif backend is None:
             self.backend = LocalVectorStore()
         else:
             self.backend = backend
-        self.chunk_size_words = chunk_size_words
-        self.chunk_overlap_words = chunk_overlap_words
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
         self._chunks: Dict[str, IndexedChunk] = {}
 
     def _chunk_text(self, text: str) -> List[str]:
         words = text.split()
         if not words:
             return []
-        if self.chunk_overlap_words <= 0:
-            return [" ".join(words[i : i + self.chunk_size_words]) for i in range(0, len(words), self.chunk_size_words)]
+        if self.chunk_overlap <= 0:
+            return [" ".join(words[i : i + self.chunk_size]) for i in range(0, len(words), self.chunk_size)]
         # Overlapping chunks
         chunks = []
         i = 0
         while i < len(words):
-            chunk = words[i : i + self.chunk_size_words]
+            chunk = words[i : i + self.chunk_size]
             chunks.append(" ".join(chunk))
-            if len(chunk) < self.chunk_size_words:
+            if len(chunk) < self.chunk_size:
                 break
-            i += self.chunk_size_words - self.chunk_overlap_words
+            i += self.chunk_size - self.chunk_overlap
         return chunks
+
+    def _chunk_text_with_metadata(self, text: str) -> List[Dict[str, Any]]:
+        words = text.split()
+        if not words:
+            return []
+        chunks = []
+        i = 0
+        while i < len(words):
+            chunk = words[i : i + self.chunk_size]
+            start_char = len(" ".join(words[:i]))
+            end_char = start_char + len(" ".join(chunk))
+            chunks.append({"text": " ".join(chunk), "start_char": start_char, "end_char": end_char})
+            if len(chunk) < self.chunk_size:
+                break
+            i += self.chunk_size - self.chunk_overlap
+        return chunks
+
+    def index_dataset(self, dataset: DatasetSchema) -> List[str]:
+        if dataset.intended_use != IntendedUse.RETRIEVAL and dataset.intended_use != IntendedUse.retrieval:
+            raise ValueError("Dataset intended_use must be 'retrieval' to be indexed")
+
+        if not dataset.raw_text:
+            raise ValueError("Dataset has no raw_text available; text extraction required before indexing")
+
+        chunks = self._chunk_text(dataset.raw_text)
+        to_index = []
+        ids = []
+        for i, c in enumerate(chunks):
+            chunk_id = f"{dataset.dataset_id}::v{dataset.version}::chunk{i}"
+            meta = {
+                "text": c,
+                "dataset_id": dataset.dataset_id,
+                "source": dataset.provenance.source_uri or "",
+                "version": dataset.version,
+                "chunk_index": i,
+            }
+            to_index.append((chunk_id, meta))
+            self._chunks[chunk_id] = IndexedChunk(chunk_id=chunk_id, dataset_id=dataset.dataset_id, source=meta["source"], version=dataset.version, text=c)
+            ids.append(chunk_id)
+
+        self.backend.index(to_index)
+        logger.info(f"Indexed dataset {dataset.dataset_id} into {len(ids)} chunks.")
+        return ids
+
+    def index_datasets(self, datasets: Iterable[DatasetSchema]) -> List[str]:
+        ids = []
+        for ds in datasets:
+            ids.extend(self.index_dataset(ds))
+        return ids
+
+    def query(self, query_text: str, top_k: int = 10, min_score: float = 0.0):
+        """
+        Query the index for relevant chunks. Optionally filter by min_score.
+        """
+        if not hasattr(self.backend, "_text_to_vector"):
+            tokens = [t.lower() for t in query_text.split() if t]
+            counts = Counter(tokens)
+            norm = sqrt(sum(v * v for v in counts.values())) or 1.0
+            qvec = {k: v / norm for k, v in counts.items()}
+        else:
+            qvec = self.backend._text_to_vector(query_text)
+
+        raw_results = self.backend.query(qvec, top_k)
+        structured = []
+        for cid, score in raw_results:
+            if score < min_score:
+                continue
+            meta = self.backend.metadata(cid)
+            structured.append({
+                "chunk_id": cid,
+                "text": meta["text"],
+                "dataset_id": meta["dataset_id"],
+                "source": meta.get("source"),
+                "version": meta.get("version"),
+                "score": float(score),
+            })
+        logger.info(f"Query '{query_text}' returned {len(structured)} results (min_score={min_score})")
+        return structured
+
+    def save_index(self, directory: str) -> None:
+        """Save backend index and chunk registry to directory."""
+        Path(directory).mkdir(parents=True, exist_ok=True)
+        if isinstance(self.backend, LocalVectorStore):
+            self.backend.save_index(str(Path(directory) / "vectors.json"))
+        with open(str(Path(directory) / "chunks.json"), "w", encoding="utf-8") as f:
+            json.dump({k: v.__dict__ for k, v in self._chunks.items()}, f)
+        meta = {
+            "chunk_size": self.chunk_size,
+            "chunk_overlap": self.chunk_overlap,
+            "backend": str(type(self.backend)),
+        }
+        with open(str(Path(directory) / "meta.json"), "w", encoding="utf-8") as f:
+            json.dump(meta, f)
+        logger.info(f"Index saved to {directory}")
+
+    def load_index(self, directory: str) -> None:
+        """Load backend index and chunk registry from directory. If files do not exist, set empty index."""
+        import os
+        if isinstance(self.backend, LocalVectorStore):
+            self.backend.load_index(str(Path(directory) / "vectors.json"))
+        chunks_path = str(Path(directory) / "chunks.json")
+        meta_path = str(Path(directory) / "meta.json")
+        if not os.path.exists(chunks_path):
+            logger.warning(f"Chunks file {chunks_path} not found. Initializing empty chunk registry.")
+            self._chunks = {}
+        else:
+            with open(chunks_path, "r", encoding="utf-8") as f:
+                chunk_data = json.load(f)
+            self._chunks = {k: IndexedChunk(**v) for k, v in chunk_data.items()}
+        if os.path.exists(meta_path):
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        logger.info(f"Index loaded from {directory} ({len(self._chunks)} chunks)")
+
+    def get_chunk(self, chunk_id: str) -> Optional[IndexedChunk]:
+        """Return chunk by ID, or None if not found."""
+        return self._chunks.get(chunk_id)
+
+    def chunk_count(self) -> int:
+        """Return total number of indexed chunks."""
+        return len(self._chunks)
+
+    def index(self, items: Iterable[Tuple[str, Dict[str, Any]]]) -> None:
+        for chunk_id, payload in items:
+            text = payload["text"]
+            vec = self._text_to_vector(text)
+            self._vectors[chunk_id] = vec
+            self._meta[chunk_id] = dict(payload)
+
+    def query(self, vector: Dict[str, float], top_k: int) -> List[Tuple[str, float]]:
+        results: List[Tuple[str, float]] = []
+        for cid, vec in self._vectors.items():
+            score = 0.0
+            for k, v in vector.items():
+                score += v * vec.get(k, 0.0)
+            if score > 0:
+                results.append((cid, score))
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:top_k]
+
+    def metadata(self, chunk_id: str) -> Dict[str, Any]:
+        return self._meta[chunk_id]
+
+    def save_index(self, path: str) -> None:
+        """Save vectors and meta to a JSON file."""
+        data = {"vectors": self._vectors, "meta": self._meta}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        logger.info(f"LocalVectorStore index saved to {path}")
+
+    def load_index(self, path: str) -> None:
+        """Load vectors and meta from a JSON file."""
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self._vectors = {k: {kk: float(vv) for kk, vv in v.items()} for k, v in data["vectors"].items()}
+        self._meta = data["meta"]
+        logger.info(f"LocalVectorStore index loaded from {path} ({len(self._vectors)} chunks)")
+
+
+
+    # ...existing code...
 
     def _chunk_text_with_metadata(self, text: str) -> List[Dict[str, Any]]:
         words = text.split()
@@ -152,8 +326,8 @@ class IndexedChunk:
 
 
     def index_dataset(self, dataset: DatasetSchema) -> List[str]:
-        if dataset.intended_use != IntendedUse.RETRIEVAL and dataset.intended_use != IntendedUse.retrieval:
-            raise ValueError("Dataset intended_use must be 'retrieval' to be indexed")
+        if dataset.intended_use != IntendedUse.RETRIEVAL:
+            raise ValueError("Dataset intended_use must be 'RETRIEVAL' to be indexed")
 
         if not dataset.raw_text:
             raise ValueError("Dataset has no raw_text available; text extraction required before indexing")
@@ -234,12 +408,21 @@ class IndexedChunk:
         """Load backend index and chunk registry from directory."""
         if isinstance(self.backend, LocalVectorStore):
             self.backend.load_index(str(Path(directory) / "vectors.json"))
-        with open(str(Path(directory) / "chunks.json"), "r", encoding="utf-8") as f:
-            chunk_data = json.load(f)
-        self._chunks = {k: IndexedChunk(**v) for k, v in chunk_data.items()}
-        with open(str(Path(directory) / "meta.json"), "r", encoding="utf-8") as f:
-            meta = json.load(f)
-        logger.info(f"Index loaded from {directory} ({len(self._chunks)} chunks)")
+        chunks_path = str(Path(directory) / "chunks.json")
+        if os.path.exists(chunks_path):
+            with open(chunks_path, "r", encoding="utf-8") as f:
+                chunk_data = json.load(f)
+            self._chunks = {k: IndexedChunk(**v) for k, v in chunk_data.items()}
+        else:
+            logger.warning(f"Chunks file {chunks_path} not found. Initializing empty chunk registry.")
+            self._chunks = {}
+        meta_path = str(Path(directory) / "meta.json")
+        if os.path.exists(meta_path):
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            logger.info(f"Index loaded from {directory} ({len(self._chunks)} chunks)")
+        else:
+            logger.warning(f"Meta file {meta_path} not found. Skipping meta load.")
 
     def get_chunk(self, chunk_id: str) -> Optional[IndexedChunk]:
         """Return chunk by ID, or None if not found."""

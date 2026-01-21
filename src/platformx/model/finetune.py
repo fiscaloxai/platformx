@@ -100,8 +100,8 @@ class FineTuner:
         if not datasets:
             raise ValueError("At least one dataset is required for fine-tuning")
         for d in datasets:
-            if d.intended_use != IntendedUse.finetuning:
-                raise ValueError(f"Dataset {d.dataset_id} not intended for finetuning")
+            if d.intended_use != IntendedUse.FINETUNING:
+                raise ValueError(f"Dataset {d.dataset_id} not intended for FINETUNING")
             # Ensure provenance contains minimal required fields
             if not d.provenance or not d.provenance.source_uri or not d.provenance.ingested_at:
                 raise ValueError(f"Dataset {d.dataset_id} missing required provenance information")
@@ -112,9 +112,9 @@ class FineTuner:
         Convert DatasetSchema list to training format. Handles RAFT and plain text.
         """
         examples = []
-        for ds in datasets:
-            if ds.raw_text and "---INSTRUCTION---" in ds.raw_text:
-                # Parse RAFT-style
+        for d in datasets:
+            if d.intended_use != IntendedUse.FINETUNING:
+                raise ValueError("All datasets must have intended_use 'FINETUNING'")
                 parts = ds.raw_text.split("---INSTRUCTION---")
                 for part in parts:
                     if not part.strip():

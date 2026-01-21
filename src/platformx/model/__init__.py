@@ -115,7 +115,9 @@ __all__ = [
     # Backend
     "BaseModelBackend",
     "ModelMetadata",
-]"""Model backend and fine-tuning interfaces for PlatformX.
+]
+
+"""Model backend and fine-tuning interfaces for PlatformX.
 
 Expose a limited, safe public API for model backends and adapters.
 Do not expose raw inference or internal weight handling here.

@@ -59,10 +59,32 @@ def index_documents(
         logger.error(f"Required modules missing: {e}")
         raise
     loader = DataLoader()
-    docs = loader.load(source, domain=domain, **kwargs)
+    import os
+    if isinstance(source, str) and os.path.isdir(source):
+        # Directory: load all files with required metadata
+        base_metadata = {
+            "dataset_id_prefix": dataset_id + "_",
+            "domain": domain,
+            "intended_use": "RETRIEVAL",
+        }
+        docs = loader.load_directory(source, base_metadata)
+    else:
+        # Single file: require all metadata
+        metadata = {
+            "dataset_id": dataset_id,
+            "domain": domain,
+            "intended_use": "RETRIEVAL",
+        }
+        docs = loader.load(source, metadata)
     embedding = create_embedding_backend(embedding_backend)
     indexer = Indexer(embedding_backend=embedding, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    chunk_count = indexer.index_dataset(dataset_id, docs)
+    # If docs is a list, index all; if single, wrap in list
+    if isinstance(docs, list):
+        chunk_count = 0
+        for ds in docs:
+            chunk_count += len(indexer.index_dataset(ds))
+    else:
+        chunk_count = len(indexer.index_dataset(docs))
     if index_path:
         Path(index_path).mkdir(parents=True, exist_ok=True)
         indexer.save(index_path)

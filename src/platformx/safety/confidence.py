@@ -211,6 +211,8 @@ class RetrievalScoreAggregator(ConfidenceScorer):
 
 class EnsembleConfidenceScorer(ConfidenceScorer):
     """Combine multiple scorers with configurable weights."""
+    def scorer_id(self) -> str:
+        return "ensemble"
     def __init__(self):
         self._scorers: List[Tuple[ConfidenceScorer, float]] = []
         self._logger = logger
@@ -350,7 +352,9 @@ def assess_confidence(retrieved_evidence: List[Dict[str, Any]], required_groundi
     assessor = ConfidenceAssessor(ConfidenceConfig(min_sources=required_grounding))
     score = assessor.assess(retrieved_evidence)
     return {"level": score.level, "rationale": score.breakdown}
-# ...existing code...
+    # ...existing code...
+    def scorer_id(self) -> str:
+        return "ensemble"
 
 __all__ = [
     "ConfidenceLevel",

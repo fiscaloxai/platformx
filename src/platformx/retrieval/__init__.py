@@ -1,6 +1,6 @@
+
 """PlatformX retrieval package.
 
-"""
 Retrieval module for PlatformX.
 
 This module provides document indexing, embedding generation, and retrieval
@@ -8,8 +8,7 @@ capabilities for RAG (Retrieval-Augmented Generation) workflows in pharma/life-s
 
 Core Components:
 - Indexer: Chunks and indexes documents for retrieval
-- RetrievalEngine: Executes queries against indexed documents
-- EmbeddingBackend: Abstract interface for text embeddings
+
 
 Embedding Backends:
 - TFIDFBackend: Simple TF-IDF based embeddings (no dependencies)
@@ -104,8 +103,7 @@ __all__ = [
 	"GroundedQuery",
 	"QueryIntent",
 ]
-Public API exposes Indexer, RetrievalEngine, and GroundedQuery.
-"""
+
 
 from .indexer import Indexer
 from .engine import RetrievalEngine

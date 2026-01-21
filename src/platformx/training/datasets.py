@@ -37,7 +37,7 @@ class RAFTDatasetBuilder:
                 dataset_id=did,
                 domain=domain,
                 source_type=SourceType.TEXT,
-                intended_use=IntendedUse.finetuning,
+                intended_use=IntendedUse.FINETUNING,
                 version=version,
                 provenance=prov,
                 metadata={"retrieval_score": s.retrieval_score, "generated_at": s.timestamp.isoformat()},
