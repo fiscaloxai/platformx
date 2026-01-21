@@ -1,57 +1,58 @@
 ﻿
 
-<p align="center">
-	<img src="PlatformX.png" alt="PlatformX Logo" width="120"/>
-</p>
 
 # PlatformX
 
-**PlatformX** is a robust, production-ready AI library for pharmaceutical and life sciences, focused on accuracy, auditability, and safety. It provides modular tools for controlled fine-tuning, retrieval-augmented generation (RAG), RAFT sample generation, and regulatory-grade model auditing.
+PlatformX is an enterprise-grade Python library developed by Fiscal Ox for building accurate, auditable, and safety-conscious AI applications in the pharmaceutical and life sciences domains. PlatformX provides modular, production-ready components for controlled fine-tuning, retrieval-augmented generation (RAG), RAFT sample generation, and regulatory-grade model auditing.
 
----
+## Table of Contents
 
-## 🚀 Features
+- [Features](#features)
+- [Installation](#installation)
+- [Architecture Overview](#architecture-overview)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Design Principles](#design-principles)
+- [License](#license)
 
-- **Modular Architecture:** Data loading, registry, retrieval, model adapters, safety, training, and audit modules.
-- **Controlled Fine-Tuning:** Deterministic, auditable workflows for regulatory compliance.
-- **Retrieval-Augmented Generation (RAG):** Fast, configurable document indexing and semantic search.
-- **RAFT Sample Generation:** Automated creation of training samples for robust model evaluation.
-- **Safety & Confidence:** Built-in safety filters, confidence scoring, and refusal logic.
-- **Audit Logging:** Structured logs for traceability and governance.
-- **Extensible & Typed:** Plugin points for custom adapters, policies, and domain logic.
+## Features
 
----
+- Modular architecture: data loading, registry, retrieval, model adapters, safety, training, and audit modules
+- Controlled, auditable fine-tuning workflows for regulatory compliance
+- Retrieval-augmented generation (RAG) with fast, configurable document indexing and semantic search
+- Automated RAFT sample generation for robust model evaluation
+- Built-in safety filters, confidence scoring, and refusal logic
+- Structured audit logging for traceability and governance
+- Extensible plugin points for custom adapters, policies, and domain logic
 
-## 📦 Installation
+## Installation
 
-Requirements: Python 3.10+
+**Requirements:** Python 3.10 or later
+
+Install from source:
 
 ```bash
 python -m pip install --upgrade pip setuptools wheel
 pip install .
 ```
 
-See [docs/installation.md](docs/installation.md) for details and virtual environment tips.
+For details and virtual environment recommendations, see [docs/installation.md](docs/installation.md).
 
----
+## Architecture Overview
 
-## 🏗️ High-Level Architecture
+PlatformX is organized into the following modules:
 
-PlatformX is organized into:
+- `data`: Data loading, schema definitions, and registry
+- `retrieval`: Indexing, semantic search, and query engine
+- `model`: Model adapters, backend, and fine-tuning
+- `training`: RAFT sample generation and dataset builder
+- `safety`: Safety filters, confidence scoring, and refusal logic
+- `audit`: Structured logging for compliance and traceability
+- `api`: High-level, user-friendly API functions
 
-- `data`: Loading, schema, registry
-- `retrieval`: Indexing, semantic search, query engine
-- `model`: Adapters, backend, fine-tuning
-- `training`: RAFT sample generation, dataset builder
-- `safety`: Filters, confidence, refusal
-- `audit`: Structured logging
-- `api`: High-level one-liner functions
+For a detailed API reference, see [docs/api.md](docs/api.md). For compliance and strategy, see [docs/strategy.md](docs/strategy.md).
 
-See [docs/api.md](docs/api.md) for API reference and [docs/strategy.md](docs/strategy.md) for compliance notes.
-
----
-
-## 🧑‍💻 Quick Start
+## Quick Start
 
 ```python
 import platformx.api as pfx
@@ -59,7 +60,7 @@ import platformx.api as pfx
 # Index documents for retrieval
 pfx.index_documents("./docs/", dataset_id="my-docs")
 
-# RAG query
+# Run a RAG query
 result = pfx.rag_query("What is machine learning?", index_path="./index/")
 
 # Generate RAFT training samples
@@ -72,11 +73,9 @@ pfx.finetune("meta-llama/Llama-2-7b-hf", dataset_path="./training_data/")
 response = pfx.generate("Explain quantum computing", model="gpt-4")
 ```
 
-See [docs/getting_started.md](docs/getting_started.md) for more examples.
+For more usage examples, see [docs/getting_started.md](docs/getting_started.md).
 
----
-
-## 📚 Documentation
+## Documentation
 
 - [Getting Started](docs/getting_started.md)
 - [API Reference](docs/api.md)
@@ -84,24 +83,14 @@ See [docs/getting_started.md](docs/getting_started.md) for more examples.
 - [Project Strategy & Compliance](docs/strategy.md)
 - [Modules Overview](docs/modules/)
 
----
+## Design Principles
 
-## 🏛️ Design Philosophy
+- **Reproducibility:** Deterministic workflows, dataset and adapter fingerprinting
+- **Transparency:** Structured audit logs and traceable model/dataset lineage
+- **Extensibility:** Plugin points for new adapters, policies, and compliance controls
+- **Safety:** Built-in filters, confidence scoring, and refusal logic
+- **Collaboration:** Clear changelogs, contribution guidelines, and open development
 
-- **Reproducibility:** Deterministic workflows, dataset and adapter fingerprints.
-- **Transparency:** Structured audit logs, traceable model and dataset lineage.
-- **Extensibility:** Plugin points for new adapters, policies, and compliance controls.
-- **Safety:** Built-in filters, confidence scoring, refusal logic.
-- **Community:** Clear changelogs, contribution guidelines, and open collaboration.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please open issues or pull requests for improvements, bug fixes, or new features. For major changes, discuss in an issue first. See [CHANGELOG.md](CHANGELOG.md) for release notes.
-
----
-
-## 📄 License
+## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
