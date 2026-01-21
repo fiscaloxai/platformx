@@ -1,9 +1,4 @@
-﻿
-
-
-# PlatformX
-
-# PlatformX
+﻿# PlatformX
 
 <div align="center">
 	<img src="PlatformX.png" alt="PlatformX Logo" width="80"/>
