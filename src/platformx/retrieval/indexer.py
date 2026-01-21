@@ -1,9 +1,16 @@
-from typing import Protocol, List, Dict, Any, Iterable, Tuple
+
+from typing import Protocol, List, Dict, Any, Iterable, Tuple, Optional
 from dataclasses import dataclass
 from math import sqrt
 from collections import Counter
+from .embeddings import EmbeddingBackend, TFIDFBackend, CachedEmbeddingBackend
+import json
+from pathlib import Path
+import logging
 
 from ..data.schema import DatasetSchema, IntendedUse
+
+logger = logging.getLogger("platformx.retrieval.indexer")
 
 
 class VectorBackend(Protocol):
@@ -28,22 +35,26 @@ class IndexedChunk:
     text: str
 
 
-class LocalVectorStore:
-    """Simple deterministic local vector store using TF vectors and cosine similarity.
+
+    """Simple deterministic local vector store using TF or embedding backends and cosine similarity.
 
     This is intentionally simple, explainable, and requires no external services.
+    Now supports pluggable embedding backends.
     """
 
-    def __init__(self) -> None:
-        # maps chunk_id -> vector (dict token->float)
+    def __init__(self, embedding_backend: Optional[EmbeddingBackend] = None) -> None:
+        self._embedding_backend = embedding_backend or TFIDFBackend()
         self._vectors: Dict[str, Dict[str, float]] = {}
-        # maps chunk_id -> metadata
         self._meta: Dict[str, Dict[str, Any]] = {}
 
     def _text_to_vector(self, text: str) -> Dict[str, float]:
+        if self._embedding_backend:
+            # Use embedding backend (returns list of floats)
+            emb = self._embedding_backend.embed_text(text)
+            return {str(i): v for i, v in enumerate(emb)}
+        # fallback: legacy TF vector
         tokens = [t.lower() for t in text.split() if t]
         counts = Counter(tokens)
-        # convert to normalized float vector
         vec = dict(counts)
         norm = sqrt(sum(v * v for v in vec.values())) or 1.0
         return {k: v / norm for k, v in vec.items()}
@@ -58,7 +69,6 @@ class LocalVectorStore:
     def query(self, vector: Dict[str, float], top_k: int) -> List[Tuple[str, float]]:
         results: List[Tuple[str, float]] = []
         for cid, vec in self._vectors.items():
-            # compute dot product (since vectors are L2-normalized)
             score = 0.0
             for k, v in vector.items():
                 score += v * vec.get(k, 0.0)
@@ -70,34 +80,82 @@ class LocalVectorStore:
     def metadata(self, chunk_id: str) -> Dict[str, Any]:
         return self._meta[chunk_id]
 
+    def save_index(self, path: str) -> None:
+        """Save vectors and meta to a JSON file."""
+        data = {"vectors": self._vectors, "meta": self._meta}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        logger.info(f"LocalVectorStore index saved to {path}")
 
-class Indexer:
-    """Builds retrieval indexes from approved datasets only.
+    def load_index(self, path: str) -> None:
+        """Load vectors and meta from a JSON file."""
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self._vectors = {k: {kk: float(vv) for kk, vv in v.items()} for k, v in data["vectors"].items()}
+        self._meta = data["meta"]
+        logger.info(f"LocalVectorStore index loaded from {path} ({len(self._vectors)} chunks)")
+
+
+
+    """
+    Builds retrieval indexes from approved datasets only.
 
     - Only datasets with `intended_use` including `retrieval` are accepted.
-    - Uses a pluggable VectorBackend; defaults to LocalVectorStore.
-    - Stores chunk text, dataset id, source reference, and version metadata.
+    - Uses a pluggable VectorBackend or embedding backend.
+    - Supports overlapping chunks for improved retrieval.
+    - Index persistence supported via save_index/load_index.
     """
 
-    def __init__(self, backend: VectorBackend = None, chunk_size_words: int = 200) -> None:
-        self.backend = backend or LocalVectorStore()
+    def __init__(self, backend: VectorBackend = None, chunk_size_words: int = 200, chunk_overlap_words: int = 50, embedding_backend: EmbeddingBackend = None) -> None:
+        if backend is None and embedding_backend is not None:
+            self.backend = LocalVectorStore(embedding_backend=embedding_backend)
+        elif backend is None:
+            self.backend = LocalVectorStore()
+        else:
+            self.backend = backend
         self.chunk_size_words = chunk_size_words
-        # keep registry of chunks
+        self.chunk_overlap_words = chunk_overlap_words
         self._chunks: Dict[str, IndexedChunk] = {}
 
     def _chunk_text(self, text: str) -> List[str]:
         words = text.split()
         if not words:
             return []
-        chunks = [" ".join(words[i : i + self.chunk_size_words]) for i in range(0, len(words), self.chunk_size_words)]
+        if self.chunk_overlap_words <= 0:
+            return [" ".join(words[i : i + self.chunk_size_words]) for i in range(0, len(words), self.chunk_size_words)]
+        # Overlapping chunks
+        chunks = []
+        i = 0
+        while i < len(words):
+            chunk = words[i : i + self.chunk_size_words]
+            chunks.append(" ".join(chunk))
+            if len(chunk) < self.chunk_size_words:
+                break
+            i += self.chunk_size_words - self.chunk_overlap_words
         return chunks
 
+    def _chunk_text_with_metadata(self, text: str) -> List[Dict[str, Any]]:
+        words = text.split()
+        if not words:
+            return []
+        chunks = []
+        i = 0
+        while i < len(words):
+            chunk = words[i : i + self.chunk_size_words]
+            start_char = len(" ".join(words[:i]))
+            end_char = start_char + len(" ".join(chunk))
+            chunks.append({"text": " ".join(chunk), "start_char": start_char, "end_char": end_char})
+            if len(chunk) < self.chunk_size_words:
+                break
+            i += self.chunk_size_words - self.chunk_overlap_words
+        return chunks
+
+
     def index_dataset(self, dataset: DatasetSchema) -> List[str]:
-        if dataset.intended_use != IntendedUse.retrieval:
+        if dataset.intended_use != IntendedUse.RETRIEVAL and dataset.intended_use != IntendedUse.retrieval:
             raise ValueError("Dataset intended_use must be 'retrieval' to be indexed")
 
         if not dataset.raw_text:
-            # We do not parse PDFs or binary content here.
             raise ValueError("Dataset has no raw_text available; text extraction required before indexing")
 
         chunks = self._chunk_text(dataset.raw_text)
@@ -116,8 +174,8 @@ class Indexer:
             self._chunks[chunk_id] = IndexedChunk(chunk_id=chunk_id, dataset_id=dataset.dataset_id, source=meta["source"], version=dataset.version, text=c)
             ids.append(chunk_id)
 
-        # index with backend
         self.backend.index(to_index)
+        logger.info(f"Indexed dataset {dataset.dataset_id} into {len(ids)} chunks.")
         return ids
 
     def index_datasets(self, datasets: Iterable[DatasetSchema]) -> List[str]:
@@ -126,10 +184,12 @@ class Indexer:
             ids.extend(self.index_dataset(ds))
         return ids
 
-    def query(self, query_text: str, top_k: int = 10):
-        # Build query vector deterministically using same logic as backend
+
+    def query(self, query_text: str, top_k: int = 10, min_score: float = 0.0):
+        """
+        Query the index for relevant chunks. Optionally filter by min_score.
+        """
         if not hasattr(self.backend, "_text_to_vector"):
-            # fallback: simple tokenization
             tokens = [t.lower() for t in query_text.split() if t]
             counts = Counter(tokens)
             norm = sqrt(sum(v * v for v in counts.values())) or 1.0
@@ -138,9 +198,10 @@ class Indexer:
             qvec = self.backend._text_to_vector(query_text)
 
         raw_results = self.backend.query(qvec, top_k)
-        # map to structured results
         structured = []
         for cid, score in raw_results:
+            if score < min_score:
+                continue
             meta = self.backend.metadata(cid)
             structured.append({
                 "chunk_id": cid,
@@ -150,4 +211,48 @@ class Indexer:
                 "version": meta.get("version"),
                 "score": float(score),
             })
+        logger.info(f"Query '{query_text}' returned {len(structured)} results (min_score={min_score})")
         return structured
+
+    def save_index(self, directory: str) -> None:
+        """Save backend index and chunk registry to directory."""
+        Path(directory).mkdir(parents=True, exist_ok=True)
+        if isinstance(self.backend, LocalVectorStore):
+            self.backend.save_index(str(Path(directory) / "vectors.json"))
+        with open(str(Path(directory) / "chunks.json"), "w", encoding="utf-8") as f:
+            json.dump({k: v.__dict__ for k, v in self._chunks.items()}, f)
+        meta = {
+            "chunk_size_words": self.chunk_size_words,
+            "chunk_overlap_words": self.chunk_overlap_words,
+            "backend": str(type(self.backend)),
+        }
+        with open(str(Path(directory) / "meta.json"), "w", encoding="utf-8") as f:
+            json.dump(meta, f)
+        logger.info(f"Index saved to {directory}")
+
+    def load_index(self, directory: str) -> None:
+        """Load backend index and chunk registry from directory."""
+        if isinstance(self.backend, LocalVectorStore):
+            self.backend.load_index(str(Path(directory) / "vectors.json"))
+        with open(str(Path(directory) / "chunks.json"), "r", encoding="utf-8") as f:
+            chunk_data = json.load(f)
+        self._chunks = {k: IndexedChunk(**v) for k, v in chunk_data.items()}
+        with open(str(Path(directory) / "meta.json"), "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        logger.info(f"Index loaded from {directory} ({len(self._chunks)} chunks)")
+
+    def get_chunk(self, chunk_id: str) -> Optional[IndexedChunk]:
+        """Return chunk by ID, or None if not found."""
+        return self._chunks.get(chunk_id)
+
+    def chunk_count(self) -> int:
+        """Return total number of indexed chunks."""
+        return len(self._chunks)
+
+# Public API
+__all__ = [
+    "VectorBackend",
+    "IndexedChunk",
+    "LocalVectorStore",
+    "Indexer",
+]

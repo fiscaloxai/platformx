@@ -1,3 +1,4 @@
+
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -5,17 +6,145 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "platformx"
 version = "0.1.0"
-description = "PlatformX — a pharma-focused AI platform for accuracy, traceability, and safety."
+description = "Production-quality LLM fine-tuning, RAG, and RAFT library with comprehensive safety, audit, and traceability features."
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
-dependencies = [
+authors = [
+    {name = "Your Company", email = "dev@yourcompany.com"}
+]
+keywords = [
+    "llm",
+    "fine-tuning",
+    "rag",
+    "raft",
+    "retrieval",
+    "machine-learning",
+    "nlp",
     "transformers",
-    "torch",
-    "datasets",
     "peft",
-    "chromadb",
-    "pydantic",
+    "lora"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["platformx", "platformx.audit", "platformx.data", "platformx.model", "platformx.retrieval", "platformx.safety", "platformx.training"]
+# Core dependencies - minimal required packages
+dependencies = [
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+# Embeddings and retrieval
+retrieval = [
+    "sentence-transformers>=2.2.0",
+    "chromadb>=0.4.0",
+]
+
+# Fine-tuning and training
+training = [
+    "transformers>=4.35.0",
+    "torch>=2.0.0",
+    "datasets>=2.14.0",
+    "peft>=0.6.0",
+    "accelerate>=0.24.0",
+    "bitsandbytes>=0.41.0",
+]
+
+# Inference backends
+inference = [
+    "transformers>=4.35.0",
+    "torch>=2.0.0",
+]
+
+# API providers
+openai = [
+    "openai>=1.0.0",
+]
+
+anthropic = [
+    "anthropic>=0.7.0",
+]
+
+# Document processing
+documents = [
+    "pypdf>=3.0.0",
+    "python-docx>=0.8.11",
+]
+
+# Development and testing
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "pre-commit>=3.0.0",
+]
+
+
+[tool.pytest.ini_options]
+addopts = "--cov=src/platformx --cov-report=term-missing"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+strict_optional = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+select = ["E", "F", "I", "B", "C", "D", "T", "UP", "N", "S", "ANN", "ARG", "PL", "RUF"]
+ignore = ["D100", "D104", "D107"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/platformx"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+omit = ["src/platformx/__init__.py"]
+
+[tool.mkdocs]
+site_name = "PlatformX Documentation"
+site_url = "https://your-org.github.io/platformx"
+repo_url = "https://github.com/your-org/platformx"
+theme = {
+    name = "material",
+    custom_dir = "docs/theme"
+}
+nav = [
+    {"Home": "docs/index.md"},
+    {"Getting Started": "docs/getting_started.md"},
+    {"API": "docs/api.md"},
+    {"Configuration": "docs/configuration.md"},
+    {"Strategy": "docs/strategy.md"},
+    {"Modules": [
+        {"Config": "docs/modules/config.md"},
+        {"Core": "docs/modules/core.md"},
+        {"Data": "docs/modules/data.md"},
+        {"Model Finetune": "docs/modules/model_finetune.md"},
+        {"Safety": "docs/modules/safety.md"},
+        {"Training RAFT": "docs/modules/training_raft.md"},
+    ]}
+]

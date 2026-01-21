@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: platformx
+Version: 0.1.0
+Summary: PlatformX — a pharma-focused AI platform for accuracy, traceability, and safety.
+Requires-Python: >=3.10
+License-File: LICENSE
+Requires-Dist: transformers
+Requires-Dist: torch
+Requires-Dist: datasets
+Requires-Dist: peft
+Requires-Dist: chromadb
+Requires-Dist: pydantic
+Dynamic: license-file
