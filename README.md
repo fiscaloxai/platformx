@@ -1,8 +1,13 @@
 ﻿# PlatformX
 <div align="center">
-	<img src="PlatformX.png" alt="PlatformX Logo" width="100"/>
+	<img src="PlatformX.png" alt="PlatformX Logo" width="80"/>
 </div>
 <br></br>
+
+<div style="display: flex; align-items: center; gap: 12px;">
+	<img src="PlatformX.png" alt="PlatformX Logo" width="40"/>
+	<span style="font-size: 2.2em; font-weight: bold; vertical-align: middle;">PlatformX</span>
+</div>
 
 PlatformX is an enterprise-grade Python library developed for building accurate, auditable, and safety-conscious AI applications in the pharmaceutical and life sciences domains. PlatformX provides modular, production-ready components for controlled fine-tuning, retrieval-augmented generation (RAG), RAFT sample generation, and regulatory-grade model auditing.
 
