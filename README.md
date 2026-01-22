@@ -402,29 +402,6 @@ mypy src/
 # Format code
 black src/
 ```
-
----
-
-## Roadmap
-
-### v0.2.0 (Q2 2024)
-- [ ] Vector database integration (Pinecone, Weaviate)
-- [ ] Async/await support for all I/O operations
-- [ ] Streaming inference responses
-- [ ] Web UI for monitoring and management
-
-### v0.3.0 (Q3 2024)
-- [ ] Multi-language support
-- [ ] GraphQL API
-- [ ] Enhanced model quantization (GPTQ, AWQ)
-- [ ] Kubernetes deployment configs
-
-### v1.0.0 (Q4 2024)
-- [ ] Production hardening
-- [ ] Performance optimizations (C++/Rust bindings)
-- [ ] Enterprise features (SSO, RBAC)
-- [ ] Cloud-native deployment
-
 ---
 
 ## License
