@@ -104,6 +104,62 @@ class DataLoader:
             self._logger.warning(f"PDF extraction failed: {e}")
             return "", None
 
+    def _extract_text_from_html(self, file_path: str) -> Tuple[str, None]:
+        try:
+            from bs4 import BeautifulSoup
+            with open(file_path, "r", encoding="utf-8") as f:
+                soup = BeautifulSoup(f.read(), "html.parser")
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+            text = soup.get_text(separator="\n", strip=True)
+            return text, None
+        except ImportError:
+            self._logger.warning("beautifulsoup4 not installed, cannot extract HTML text. Install with: pip install beautifulsoup4")
+            # Fallback: basic HTML tag removal
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            import re
+            text = re.sub(r'<[^>]+>', '', content)
+            return text.strip(), None
+        except Exception as e:
+            self._logger.warning(f"HTML extraction failed: {e}")
+            return "", None
+
+    def _extract_text_from_xml(self, file_path: str) -> Tuple[str, None]:
+        try:
+            import xml.etree.ElementTree as ET
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+            # Extract all text content from XML
+            text_parts = []
+            for elem in root.iter():
+                if elem.text and elem.text.strip():
+                    text_parts.append(elem.text.strip())
+                if elem.tail and elem.tail.strip():
+                    text_parts.append(elem.tail.strip())
+            text = "\n".join(text_parts)
+            return text, None
+        except Exception as e:
+            self._logger.warning(f"XML extraction failed: {e}")
+            return "", None
+
+    def _extract_text_from_parquet(self, file_path: str) -> Tuple[str, Optional[int]]:
+        try:
+            import pyarrow.parquet as pq
+            table = pq.read_table(file_path)
+            df = table.to_pandas()
+            record_count = len(df)
+            # Convert dataframe to text representation
+            text = df.to_string(index=False)
+            return text, record_count
+        except ImportError:
+            self._logger.warning("pyarrow not installed, cannot extract Parquet data. Install with: pip install pyarrow")
+            return "", None
+        except Exception as e:
+            self._logger.warning(f"Parquet extraction failed: {e}")
+            return "", None
+
     def _extract_text(self, file_path: str, source_type: SourceType) -> Tuple[str, Optional[int]]:
         if source_type == SourceType.TEXT:
             return self._extract_text_from_txt(file_path), None
@@ -113,6 +169,12 @@ class DataLoader:
             return self._extract_text_from_json(file_path)
         elif source_type == SourceType.PDF:
             return self._extract_text_from_pdf(file_path)
+        elif source_type == SourceType.HTML:
+            return self._extract_text_from_html(file_path)
+        elif source_type == SourceType.XML:
+            return self._extract_text_from_xml(file_path)
+        elif source_type == SourceType.PARQUET:
+            return self._extract_text_from_parquet(file_path)
         else:
             self._logger.warning(f"Extraction for {source_type} not implemented. Returning empty string.")
             return "", None

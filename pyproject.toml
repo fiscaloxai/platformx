@@ -42,6 +42,7 @@ classifiers = [
 # Core dependencies - minimal required packages
 dependencies = [
     "pydantic>=2.0.0",
+    "tqdm>=4.65.0",
 ]
 
 [project.optional-dependencies]
@@ -80,6 +81,9 @@ anthropic = [
 documents = [
     "pypdf>=3.0.0",
     "python-docx>=0.8.11",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "pyarrow>=14.0.0",
 ]
 
 # Development and testing
