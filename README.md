@@ -2,7 +2,7 @@
 
 <div align="center">
         <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-                <img src="PlatformX.png" alt="PlatformX Logo" width="100"/>
+                <img src="https://github.com/fiscaloxai/platformx/raw/main/PlatformX.png" alt="PlatformX Logo" width="100"/>
         </div>
         <p><strong>Enterprise-Grade AI Library for Pharmaceutical & Life Sciences</strong></p>
         <p>
@@ -42,7 +42,6 @@ Whether you're building RAG systems for clinical trial data, fine-tuning models 
 - [Use Cases](#use-cases)
 - [Documentation](#documentation)
 - [Design Principles](#design-principles)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
