@@ -35,60 +35,62 @@ Whether you're building RAG systems for clinical trial data, fine-tuning models 
 
 ## Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Architecture Overview](#architecture-overview)
-- [Quick Start](#quick-start)
-- [Use Cases](#use-cases)
-- [Documentation](#documentation)
-- [Design Principles](#design-principles)
-- [License](#license)
+- **Audit logging**: Complete training lineage for compliance
 
----
+# PlatformX
+
+PlatformX is a modular, extensible platform for building, evaluating, and deploying retrieval-augmented generation (RAG) pipelines and AI safety solutions. It provides a unified interface for data indexing, retrieval, model fine-tuning, safety filtering, and audit logging, enabling rapid prototyping and robust deployment of advanced AI systems.
 
 ## Features
 
-### Retrieval-Augmented Generation (RAG)
-- **Multi-format document support**: PDF, DOCX, HTML, XML, CSV, JSON, Parquet
-- **Flexible embeddings**: TF-IDF, Sentence Transformers, or custom backends
-- **Smart chunking**: Configurable overlap for better context retention
-- **Semantic search**: Fast, deterministic retrieval with scoring
-
-### Model Fine-Tuning
-- **LoRA/PEFT**: Parameter-efficient fine-tuning for large models
-- **HuggingFace integration**: Seamless model loading and training
-- **Quantization support**: 8-bit and 4-bit training for memory efficiency
-- **Audit logging**: Complete training lineage for compliance
-
-### RAFT Sample Generation
-- **Automated dataset creation**: Generate training samples from retrieved context
-- **Configurable ratios**: Control positive/negative sample distribution
-- **Reasoning chains**: Include step-by-step reasoning in samples
-- **Distractor injection**: Add hard negatives for robust training
-
-### Safety & Compliance
-- **PII detection**: Automatic detection of emails, phones, SSN, credit cards
-- **Content filtering**: Keyword and regex-based safety filters
-- **Intent classification**: Block out-of-scope queries
-- **Confidence scoring**: Multi-factor confidence assessment
-- **Audit trails**: Structured logging for regulatory review
-
-### Data Management
-- **Dataset registry**: Centralized tracking with provenance
-- **Version control**: Semantic versioning for datasets and models
-- **Checksums**: SHA256 hashing for data integrity
-- **Metadata tracking**: Rich metadata for discovery and governance
-
----
+- **Modular RAG Pipeline**: Easily build and customize RAG pipelines with interchangeable components for data loading, retrieval, generation, and safety filtering.
+- **AI Safety**: Integrated safety modules for content filtering, bias detection, and audit logging.
+- **Model Fine-tuning**: Tools for fine-tuning and evaluating language models on custom datasets.
+- **Extensible API**: Unified API for interacting with all platform components.
+- **CLI Tools**: Command-line utilities for common tasks and workflows.
 
 ## Installation
 
-### Basic Installation
+PlatformX requires Python 3.8+.
 
 ```bash
 pip install platformx
 ```
 
+Or install from source:
+
+```bash
+git clone https://github.com/fiscaloxai/platformx.git
+cd platformx
+pip install -e .
+```
+
+## Quick Start
+
+See the [examples/README.md](examples/README.md) directory for usage examples.
+
+```python
+from platformx import api
+
+# Index data
+api.index_data("my_corpus", ["Document 1", "Document 2"])
+
+# Run a RAG pipeline
+response = api.rag_query("my_corpus", "What is PlatformX?")
+print(response)
+```
+
+## Documentation
+
+Full documentation is available in the [docs/index.md](docs/index.md) directory and at [https://fiscaloxai.github.io/platformx/](https://fiscaloxai.github.io/platformx/)
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+PlatformX is licensed under the [Apache 2.0 License](LICENSE).
 ### With All Features
 
 ```bash
@@ -103,7 +105,7 @@ cd platformx
 pip install -e ".[dev]"
 ```
 
-See [INSTALL.md](INSTALL.md) for detailed installation instructions.
+See [INSTALL.md](https://github.com/fiscaloxai/platformx/blob/main/INSTALL.md) for detailed installation instructions.
 
 ---
 
@@ -132,7 +134,7 @@ platformx/
 - **`audit`**: Log all operations with correlation IDs for traceability
 - **`api`**: Simple one-liner functions for common workflows
 
-For detailed API reference, see [docs/api.md](docs/api.md).
+For detailed API reference, see [docs/api.md](https://github.com/fiscaloxai/platformx/blob/main/docs/api.md).
 
 ---
 
@@ -329,22 +331,22 @@ pfx.finetune(
 
 Comprehensive documentation is available:
 
-- **[Getting Started Guide](docs/getting_started.md)** - Step-by-step tutorial
-- **[API Reference](docs/api.md)** - Complete API documentation
-- **[Configuration](docs/configuration.md)** - Configuration options
-- **[Strategy & Compliance](docs/strategy.md)** - Design principles
-- **[Module Overview](docs/modules/)** - Deep dive into each module
-- **[Installation Guide](INSTALL.md)** - Detailed setup instructions
+- **[Getting Started Guide](https://github.com/fiscaloxai/platformx/blob/main/docs/getting_started.md)** - Step-by-step tutorial
+- **[API Reference](https://github.com/fiscaloxai/platformx/blob/main/docs/api.md)** - Complete API documentation
+- **[Configuration](https://github.com/fiscaloxai/platformx/blob/main/docs/configuration.md)** - Configuration options
+- **[Strategy & Compliance](https://github.com/fiscaloxai/platformx/blob/main/docs/strategy.md)** - Design principles
+- **[Module Overview](https://github.com/fiscaloxai/platformx/tree/main/docs/modules)** - Deep dive into each module
+- **[Installation Guide](https://github.com/fiscaloxai/platformx/blob/main/INSTALL.md)** - Detailed setup instructions
 
 ### Examples
 
-Explore the [examples/](examples/) directory:
+Explore the [examples/](https://github.com/fiscaloxai/platformx/tree/main/examples) directory:
 
-1. **[01_basic_indexing.py](examples/01_basic_indexing.py)** - Document indexing basics
-2. **[02_rag_pipeline.py](examples/02_rag_pipeline.py)** - Complete RAG workflow
-3. **[03_raft_generation.py](examples/03_raft_generation.py)** - RAFT sample generation
-4. **[04_safety_filtering.py](examples/04_safety_filtering.py)** - Safety configuration
-5. **[05_quick_start.py](examples/05_quick_start.py)** - Quick start demo
+1. **[01_basic_indexing.py](https://github.com/fiscaloxai/platformx/blob/main/examples/01_basic_indexing.py)** - Document indexing basics
+2. **[02_rag_pipeline.py](https://github.com/fiscaloxai/platformx/blob/main/examples/02_rag_pipeline.py)** - Complete RAG workflow
+3. **[03_raft_generation.py](https://github.com/fiscaloxai/platformx/blob/main/examples/03_raft_generation.py)** - RAFT sample generation
+4. **[04_safety_filtering.py](https://github.com/fiscaloxai/platformx/blob/main/examples/04_safety_filtering.py)** - Safety configuration
+5. **[05_quick_start.py](https://github.com/fiscaloxai/platformx/blob/main/examples/05_quick_start.py)** - Quick start demo
 
 ---
 
@@ -405,4 +407,4 @@ black src/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/fiscaloxai/platformx/blob/main/LICENSE) file for details.

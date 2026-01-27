@@ -2,7 +2,10 @@ LICENSE
 MANIFEST.in
 README.md
 pyproject.toml
+setup.py
 src/platformx/__init__.py
+src/platformx/api.py
+src/platformx/cli.py
 src/platformx/config.py
 src/platformx/core.py
 src/platformx.egg-info/PKG-INFO
@@ -20,7 +23,9 @@ src/platformx/model/__init__.py
 src/platformx/model/adapters.py
 src/platformx/model/backend.py
 src/platformx/model/finetune.py
+src/platformx/model/inference.py
 src/platformx/retrieval/__init__.py
+src/platformx/retrieval/embeddings.py
 src/platformx/retrieval/engine.py
 src/platformx/retrieval/indexer.py
 src/platformx/retrieval/query.py
@@ -31,9 +36,15 @@ src/platformx/safety/refusal.py
 src/platformx/training/__init__.py
 src/platformx/training/datasets.py
 src/platformx/training/raft.py
+tests/test_api.py
+tests/test_audit.py
 tests/test_audit_logger.py
 tests/test_config.py
 tests/test_core.py
+tests/test_data_loader.py
+tests/test_data_registry.py
 tests/test_data_schema.py
 tests/test_model_finetune.py
+tests/test_retrieval.py
 tests/test_safety.py
+tests/test_training.py
